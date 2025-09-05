@@ -32,3 +32,5 @@ bin/
 # Temporary files
 *.tmp
 /tmp/
+issues/
+.claude/

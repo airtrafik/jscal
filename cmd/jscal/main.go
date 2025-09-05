@@ -13,7 +13,7 @@ import (
 	"github.com/airtrafik/jscal/convert/ical"
 )
 
-const version = "0.1.0"
+const version = "0.2.0"
 
 func main() {
 	if len(os.Args) < 2 {
@@ -201,11 +201,11 @@ func convert(inputData []byte, fromFormat, toFormat string) ([]byte, error) {
 		}
 	case "json", "jscal", "jscalendar":
 		// Try to parse as single event first
-		if event, parseErr := jscal.Parse(inputData); parseErr == nil {
+		if event, parseErr := jscal.ParseEvent(inputData); parseErr == nil {
 			events = []*jscal.Event{event}
 		} else {
 			// Try as array of events
-			events, err = jscal.ParseAll(inputData)
+			events, err = jscal.ParseAllEvents(inputData)
 			if err != nil {
 				return nil, fmt.Errorf("failed to parse JSCalendar: %w", err)
 			}
@@ -266,12 +266,12 @@ func validateFile(filename string) error {
 	}
 
 	// Try to parse as single event first
-	if event, err := jscal.Parse(data); err == nil {
+	if event, err := jscal.ParseEvent(data); err == nil {
 		return event.Validate()
 	}
 
 	// Try as array of events
-	events, err := jscal.ParseAll(data)
+	events, err := jscal.ParseAllEvents(data)
 	if err != nil {
 		return fmt.Errorf("failed to parse JSCalendar: %w", err)
 	}
@@ -293,7 +293,7 @@ func formatFile(filename string) error {
 	}
 
 	// Try to parse as single event first
-	if event, err := jscal.Parse(data); err == nil {
+	if event, err := jscal.ParseEvent(data); err == nil {
 		formatted, err := event.PrettyJSON()
 		if err != nil {
 			return fmt.Errorf("failed to format JSON: %w", err)
@@ -303,7 +303,7 @@ func formatFile(filename string) error {
 	}
 
 	// Try as array of events
-	events, err := jscal.ParseAll(data)
+	events, err := jscal.ParseAllEvents(data)
 	if err != nil {
 		return fmt.Errorf("failed to parse JSCalendar: %w", err)
 	}

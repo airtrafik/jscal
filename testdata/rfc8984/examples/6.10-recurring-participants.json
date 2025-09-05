@@ -1,0 +1,58 @@
+{
+  "@type": "Event",
+  "uid": "team-meeting-weekly-2020",
+  "updated": "2020-01-07T14:00:00Z",
+  "title": "FooBar team meeting",
+  "start": "2020-01-08T09:00:00",
+  "timeZone": "Africa/Johannesburg",
+  "duration": "PT1H",
+  "virtualLocations": {
+    "0": {
+      "@type": "VirtualLocation",
+      "name": "ChatMe meeting room",
+      "uri": "https://chatme.example.com?id=1234567&pw=a8a24627b63d"
+    }
+  },
+  "recurrenceRules": [
+    {
+      "@type": "RecurrenceRule",
+      "frequency": "weekly"
+    }
+  ],
+  "replyTo": {
+    "imip": "mailto:f245f875-7f63-4a5e-a2c8@schedule.example.com"
+  },
+  "participants": {
+    "dG9tQGZvb2Jhci5xlLmNvbQ": {
+      "@type": "Participant",
+      "name": "Tom Tool",
+      "email": "tom@foobar.example.com",
+      "sendTo": {
+        "imip": "mailto:tom@calendar.example.com"
+      },
+      "participationStatus": "accepted",
+      "roles": {
+        "attendee": true
+      }
+    },
+    "em9lQGZvb2GFtcGxlLmNvbQ": {
+      "@type": "Participant",
+      "name": "Zoe Zelda",
+      "email": "zoe@foobar.example.com",
+      "sendTo": {
+        "imip": "mailto:zoe@foobar.example.com"
+      },
+      "participationStatus": "accepted",
+      "roles": {
+        "owner": true,
+        "attendee": true,
+        "chair": true
+      }
+    }
+  },
+  "recurrenceOverrides": {
+    "2020-03-04T09:00:00": {
+      "participants/dG9tQGZvb2Jhci5xlLmNvbQ/participationStatus": "declined"
+    }
+  }
+}
