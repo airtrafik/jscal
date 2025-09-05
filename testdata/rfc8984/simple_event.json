@@ -1,0 +1,52 @@
+{
+  "@type": "Event",
+  "uid": "simple-event-123@example.com",
+  "title": "Team Meeting",
+  "description": "Weekly team sync meeting to discuss project progress and plan next steps.",
+  "start": "2025-03-01T14:00:00Z",
+  "duration": "PT1H",
+  "timeZone": "UTC",
+  "created": "2025-02-01T12:00:00Z",
+  "updated": "2025-02-15T09:00:00Z",
+  "sequence": 1,
+  "status": "confirmed",
+  "freeBusyStatus": "busy",
+  "categories": {
+    "Work": true,
+    "Meeting": true
+  },
+  "locations": {
+    "1": {
+      "@type": "Location",
+      "name": "Conference Room A"
+    }
+  },
+  "participants": {
+    "john.doe@example.com": {
+      "name": "John Doe",
+      "email": "john.doe@example.com",
+      "roles": {
+        "owner": true,
+        "attendee": true,
+        "chair": true
+      },
+      "participationStatus": "accepted"
+    },
+    "jane.smith@example.com": {
+      "name": "Jane Smith",
+      "email": "jane.smith@example.com",
+      "roles": {
+        "attendee": true
+      },
+      "participationStatus": "tentative"
+    },
+    "bob.johnson@example.com": {
+      "name": "Bob Johnson",
+      "email": "bob.johnson@example.com",
+      "roles": {
+        "optional": true
+      },
+      "participationStatus": "needs-action"
+    }
+  }
+}

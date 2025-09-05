@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: ['1.23', '1.24', '1.25']
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ matrix.go-version }}
+
+    - name: Get dependencies
+      run: |
+        go mod download
+        for dir in convert/*/; do
+          if [ -f "$dir/go.mod" ]; then
+            echo "Downloading dependencies for $dir"
+            cd "$dir" && go mod download && cd - >/dev/null
+          fi
+        done
+
+    - name: Run tests with coverage
+      run: make ci-test
+
+    - name: Upload coverage files
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-${{ matrix.go-version }}
+        path: coverage/*.html
+
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: v2.1
+
