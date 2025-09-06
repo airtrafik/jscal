@@ -1,3 +1,5 @@
+github.com/airtrafik/jscal v0.2.1 h1:AAQN/HqXgFO3cyCW2nEf8qXSehl1g0u6X0/0f1n7+O0=
+github.com/airtrafik/jscal v0.2.1/go.mod h1:CbE4yuAnrazrAx8NZatuEmnO9+BKVnDrso3j13X5G1k=
 github.com/arran4/golang-ical v0.3.2 h1:MGNjcXJFSuCXmYX/RpZhR2HDCYoFuK8vTPFLEdFC3JY=
 github.com/arran4/golang-ical v0.3.2/go.mod h1:xblDGxxIUMWwFZk9dlECUlc1iXNV65LJZOTHLVwu8bo=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
