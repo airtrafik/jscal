@@ -1,0 +1,15 @@
+{
+  "@type": "Event",
+  "uid": "allday-april-fools-900",
+  "updated": "2020-01-01T00:00:00Z",
+  "title": "April Fool's Day",
+  "showWithoutTime": true,
+  "start": "1900-04-01T00:00:00",
+  "duration": "P1D",
+  "recurrenceRules": [
+    {
+      "@type": "RecurrenceRule",
+      "frequency": "yearly"
+    }
+  ]
+}

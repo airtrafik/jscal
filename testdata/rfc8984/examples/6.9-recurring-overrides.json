@@ -1,0 +1,43 @@
+{
+  "@type": "Event",
+  "uid": "calculus-course-2020",
+  "updated": "2020-01-05T09:00:00Z",
+  "title": "Calculus I",
+  "start": "2020-01-08T09:00:00",
+  "timeZone": "Europe/London",
+  "duration": "PT1H30M",
+  "locations": {
+    "mlab": {
+      "@type": "Location",
+      "title": "Math lab room 1",
+      "description": "Math Lab I, Department of Mathematics"
+    }
+  },
+  "recurrenceRules": [
+    {
+      "@type": "RecurrenceRule",
+      "frequency": "weekly",
+      "until": "2020-06-24T09:00:00"
+    }
+  ],
+  "recurrenceOverrides": {
+    "2020-01-07T14:00:00": {
+      "title": "Introduction to Calculus I (optional)"
+    },
+    "2020-04-01T09:00:00": {
+      "excluded": true
+    },
+    "2020-06-25T09:00:00": {
+      "title": "Calculus I Exam",
+      "start": "2020-06-25T10:00:00",
+      "duration": "PT2H",
+      "locations": {
+        "auditorium": {
+          "@type": "Location",
+          "title": "Big Auditorium",
+          "description": "Big Auditorium, Other Road"
+        }
+      }
+    }
+  }
+}

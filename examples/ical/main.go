@@ -110,7 +110,7 @@ func printEventSummary(event *jscal.Event) {
 	}
 	fmt.Printf("  Status: %s\n", getStringValue(event.Status))
 	fmt.Printf("  Privacy: %s\n", getStringValue(event.Privacy))
-	
+
 	if event.Description != nil {
 		desc := *event.Description
 		if len(desc) > 100 {
@@ -118,7 +118,7 @@ func printEventSummary(event *jscal.Event) {
 		}
 		fmt.Printf("  Description: %s\n", desc)
 	}
-	
+
 	if len(event.Categories) > 0 {
 		fmt.Printf("  Categories: ")
 		first := true
@@ -131,7 +131,7 @@ func printEventSummary(event *jscal.Event) {
 		}
 		fmt.Println()
 	}
-	
+
 	if len(event.Locations) > 0 {
 		fmt.Printf("  Locations: ")
 		first := true
@@ -146,7 +146,7 @@ func printEventSummary(event *jscal.Event) {
 		}
 		fmt.Println()
 	}
-	
+
 	if len(event.Participants) > 0 {
 		fmt.Printf("  Participants (%d):\n", len(event.Participants))
 		for email, participant := range event.Participants {
@@ -154,7 +154,7 @@ func printEventSummary(event *jscal.Event) {
 			if participant.Name != nil {
 				name = *participant.Name
 			}
-			
+
 			roles := "attendee"
 			if participant.Roles != nil {
 				var roleList []string
@@ -173,16 +173,16 @@ func printEventSummary(event *jscal.Event) {
 					}
 				}
 			}
-			
+
 			status := "unknown"
 			if participant.ParticipationStatus != nil {
 				status = *participant.ParticipationStatus
 			}
-			
+
 			fmt.Printf("    - %s (%s) [%s] - %s\n", name, email, roles, status)
 		}
 	}
-	
+
 	fmt.Printf("  Sequence: %s\n", getIntValue(event.Sequence))
 	if event.Created != nil {
 		fmt.Printf("  Created: %s\n", event.Created.Format("2006-01-02 15:04:05 UTC"))

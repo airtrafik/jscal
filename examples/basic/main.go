@@ -28,7 +28,7 @@ func main() {
 
 	// Example 3: Parsing from JSON
 	fmt.Println("\n3. Parsing from JSON:")
-	parsedEvent, err := jscal.Parse(jsonData)
+	parsedEvent, err := jscal.ParseEvent(jsonData)
 	if err != nil {
 		log.Fatalf("Error parsing JSON: %v", err)
 	}
@@ -86,7 +86,7 @@ func createBasicEvent() *jscal.Event {
 
 	// Add virtual location (video meeting)
 	virtualLocation := jscal.NewVirtualLocation("Zoom Meeting", "https://zoom.us/j/123456789")
-	virtualLocation.Features = []string{"audio", "video", "screen"}
+	virtualLocation.Features = map[string]bool{"audio": true, "video": true, "screen": true}
 	event.AddVirtualLocation("zoom", virtualLocation)
 
 	// Add participants

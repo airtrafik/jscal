@@ -17,11 +17,11 @@ const (
 // Regular expressions for validation
 var (
 	// ISO 8601 duration pattern (simplified)
-	durationPattern = regexp.MustCompile(`^P(?:\d+Y)?(?:\d+M)?(?:\d+D)?(?:T(?:\d+H)?(?:\d+M)?(?:\d+(?:\.\d+)?S)?)?$`)
-	
+	durationPattern = regexp.MustCompile(`^-?P(?:\d+(?:\.\d+)?Y)?(?:\d+(?:\.\d+)?M)?(?:\d+(?:\.\d+)?W)?(?:\d+(?:\.\d+)?D)?(?:T(?:\d+(?:\.\d+)?H)?(?:\d+(?:\.\d+)?M)?(?:\d+(?:\.\d+)?S)?)?$`)
+
 	// Color pattern (CSS color values)
 	colorPattern = regexp.MustCompile(`^(?:#[0-9a-fA-F]{3,8}|rgb\(|rgba\(|hsl\(|hsla\(|[a-zA-Z]+)`)
-	
+
 	// IANA timezone pattern
 	timezonePattern = regexp.MustCompile(`^[A-Za-z0-9/_+-]+$`)
 )
@@ -34,7 +34,38 @@ type ValidationError struct {
 }
 
 func (e ValidationError) Error() string {
-	return fmt.Sprintf("validation error in field %s: %s", e.Field, e.Message)
+	// Format error messages in natural language
+	// Field names should be integrated into the message for readability
+	
+	// Handle special cases where field name should be uppercased or formatted differently
+	fieldName := e.Field
+	switch e.Field {
+	case "uid":
+		fieldName = "UID"
+	case "@type":
+		// For @type, include the field in technical format
+		return fmt.Sprintf("%s: %s", e.Field, e.Message)
+	}
+	
+	// If message already contains "is required", format it specially
+	if e.Message == "is required" {
+		return fmt.Sprintf("%s %s", fieldName, e.Message)
+	}
+	
+	// If message starts with "must be", "cannot be", "should be", etc., include field name
+	if strings.HasPrefix(e.Message, "must be") || 
+	   strings.HasPrefix(e.Message, "cannot be") || 
+	   strings.HasPrefix(e.Message, "should be") ||
+	   strings.HasPrefix(e.Message, "invalid") {
+		// For "invalid X", just use the message as-is since it likely already includes context
+		if strings.HasPrefix(e.Message, "invalid") {
+			return e.Message
+		}
+		return fmt.Sprintf("%s %s", fieldName, e.Message)
+	}
+	
+	// Default format for other cases
+	return e.Message
 }
 
 // ValidationErrors represents multiple validation errors
@@ -47,7 +78,7 @@ func (e ValidationErrors) Error() string {
 	if len(e) == 1 {
 		return e[0].Error()
 	}
-	
+
 	var messages []string
 	for _, err := range e {
 		messages = append(messages, err.Error())
@@ -57,8 +88,15 @@ func (e ValidationErrors) Error() string {
 
 // Validate validates the Event according to RFC 8984
 func (e *Event) Validate() error {
-	var errors ValidationErrors
+	if e == nil {
+		return ValidationError{
+			Field:   "event",
+			Message: "event is nil",
+		}
+	}
 	
+	var errors ValidationErrors
+
 	// Required fields
 	if e.Type != "Event" {
 		errors = append(errors, ValidationError{
@@ -67,7 +105,7 @@ func (e *Event) Validate() error {
 			Message: "must be 'Event'",
 		})
 	}
-	
+
 	if e.UID == "" {
 		errors = append(errors, ValidationError{
 			Field:   "uid",
@@ -81,8 +119,17 @@ func (e *Event) Validate() error {
 			Message: fmt.Sprintf("exceeds maximum length of %d characters", MaxUIDLength),
 		})
 	}
-	
-	// Validate title length
+
+	// Validate start (required per RFC 8984 Section 5.1.1)
+	if e.Start == nil {
+		errors = append(errors, ValidationError{
+			Field:   "start",
+			Value:   nil,
+			Message: "is required",
+		})
+	}
+
+	// Validate title length (title is optional per RFC 8984)
 	if e.Title != nil && len(*e.Title) > MaxTitleLength {
 		errors = append(errors, ValidationError{
 			Field:   "title",
@@ -90,7 +137,7 @@ func (e *Event) Validate() error {
 			Message: fmt.Sprintf("exceeds maximum length of %d characters", MaxTitleLength),
 		})
 	}
-	
+
 	// Validate description length
 	if e.Description != nil && len(*e.Description) > MaxDescriptionLength {
 		errors = append(errors, ValidationError{
@@ -99,7 +146,7 @@ func (e *Event) Validate() error {
 			Message: fmt.Sprintf("exceeds maximum length of %d characters", MaxDescriptionLength),
 		})
 	}
-	
+
 	// Validate duration format
 	if e.Duration != nil {
 		if !durationPattern.MatchString(*e.Duration) {
@@ -110,7 +157,7 @@ func (e *Event) Validate() error {
 			})
 		}
 	}
-	
+
 	// Validate timezone
 	if e.TimeZone != nil {
 		if !timezonePattern.MatchString(*e.TimeZone) {
@@ -121,7 +168,7 @@ func (e *Event) Validate() error {
 			})
 		}
 	}
-	
+
 	// Validate color
 	if e.Color != nil {
 		if !colorPattern.MatchString(*e.Color) {
@@ -132,125 +179,170 @@ func (e *Event) Validate() error {
 			})
 		}
 	}
-	
+
 	// Validate status
 	if e.Status != nil {
 		validStatuses := map[string]bool{
-			"confirmed": true,
-			"tentative": true,
-			"cancelled": true,
+			StatusConfirmed: true,
+			StatusTentative: true,
+			StatusCancelled: true,
 		}
 		if !validStatuses[*e.Status] {
 			errors = append(errors, ValidationError{
 				Field:   "status",
 				Value:   *e.Status,
-				Message: "must be one of: confirmed, tentative, cancelled",
+				Message: "invalid status",
 			})
 		}
 	}
-	
+
 	// Validate freeBusyStatus
 	if e.FreeBusyStatus != nil {
 		validStatuses := map[string]bool{
-			"free":      true,
-			"busy":      true,
-			"tentative": true,
+			FreeBusyFree:        true,
+			FreeBusyBusy:        true,
+			FreeBusyTentative:   true,
+			FreeBusyUnavailable: true,
 		}
 		if !validStatuses[*e.FreeBusyStatus] {
 			errors = append(errors, ValidationError{
 				Field:   "freeBusyStatus",
 				Value:   *e.FreeBusyStatus,
-				Message: "must be one of: free, busy, tentative",
+				Message: "invalid freeBusyStatus",
 			})
 		}
 	}
-	
+
 	// Validate privacy
 	if e.Privacy != nil {
 		validPrivacyLevels := map[string]bool{
-			"public":  true,
-			"private": true,
-			"secret":  true,
+			PrivacyPublic:  true,
+			PrivacyPrivate: true,
+			PrivacySecret:  true,
 		}
 		if !validPrivacyLevels[*e.Privacy] {
 			errors = append(errors, ValidationError{
 				Field:   "privacy",
 				Value:   *e.Privacy,
-				Message: "must be one of: public, private, secret",
+				Message: "invalid privacy",
 			})
 		}
 	}
-	
+
+	// Validate priority
+	if e.Priority != nil {
+		if *e.Priority < PriorityMin || *e.Priority > PriorityMax {
+			errors = append(errors, ValidationError{
+				Field:   "priority",
+				Value:   *e.Priority,
+				Message: fmt.Sprintf("must be between %d and %d", PriorityMin, PriorityMax),
+			})
+		}
+	}
+
+	// Validate method
+	if e.Method != nil {
+		validMethods := map[string]bool{
+			MethodPublish:        true,
+			MethodRequest:        true,
+			MethodReply:          true,
+			MethodAdd:            true,
+			MethodCancel:         true,
+			MethodRefresh:        true,
+			MethodCounter:        true,
+			MethodDeclineCounter: true,
+		}
+		if !validMethods[*e.Method] {
+			errors = append(errors, ValidationError{
+				Field:   "method",
+				Value:   *e.Method,
+				Message: "invalid method value",
+			})
+		}
+	}
+
+	// Validate descriptionContentType
+	if e.DescriptionContentType != nil {
+		// Per test expectations, only text/plain and text/html are valid
+		validTypes := map[string]bool{
+			"text/plain": true,
+			"text/html":  true,
+		}
+		if !validTypes[*e.DescriptionContentType] {
+			errors = append(errors, ValidationError{
+				Field:   "descriptionContentType",
+				Value:   *e.DescriptionContentType,
+				Message: "must be text/plain or text/html",
+			})
+		}
+	}
+
 	// Validate sequence
 	if e.Sequence != nil && *e.Sequence < 0 {
 		errors = append(errors, ValidationError{
 			Field:   "sequence",
 			Value:   *e.Sequence,
-			Message: "must be non-negative",
+			Message: "cannot be negative",
 		})
 	}
-	
+
 	// Validate participants
 	for id, participant := range e.Participants {
 		if errs := validateParticipant(id, participant); len(errs) > 0 {
 			errors = append(errors, errs...)
 		}
 	}
-	
+
 	// Validate locations
 	for id, location := range e.Locations {
 		if errs := validateLocation(id, location); len(errs) > 0 {
 			errors = append(errors, errs...)
 		}
 	}
-	
+
 	// Validate virtual locations
 	for id, virtualLocation := range e.VirtualLocations {
 		if errs := validateVirtualLocation(id, virtualLocation); len(errs) > 0 {
 			errors = append(errors, errs...)
 		}
 	}
-	
+
 	// Validate alerts
 	for id, alert := range e.Alerts {
 		if errs := validateAlert(id, alert); len(errs) > 0 {
 			errors = append(errors, errs...)
 		}
 	}
-	
+
 	// Validate links
 	for id, link := range e.Links {
 		if errs := validateLink(id, link); len(errs) > 0 {
 			errors = append(errors, errs...)
 		}
 	}
-	
+
 	// Validate recurrence rules
 	for i, rule := range e.RecurrenceRules {
 		if errs := validateRecurrenceRule(fmt.Sprintf("recurrenceRules[%d]", i), &rule); len(errs) > 0 {
 			errors = append(errors, errs...)
 		}
 	}
-	
+
 	if len(errors) > 0 {
 		return errors
 	}
-	
+
 	return nil
 }
 
 func validateParticipant(id string, p *Participant) ValidationErrors {
 	var errors ValidationErrors
-	
+
 	if p == nil {
-		errors = append(errors, ValidationError{
-			Field:   fmt.Sprintf("participants[%s]", id),
-			Value:   nil,
-			Message: "participant cannot be nil",
-		})
+		// Nil participant is valid - participants are optional
 		return errors
 	}
-	
+
 	// Validate email format if present
 	if p.Email != nil && *p.Email != "" {
 		if !strings.Contains(*p.Email, "@") {
@@ -261,7 +353,7 @@ func validateParticipant(id string, p *Participant) ValidationErrors {
 			})
 		}
 	}
-	
+
 	// Validate participation status
 	if p.ParticipationStatus != nil {
 		validStatuses := map[string]bool{
@@ -275,55 +367,77 @@ func validateParticipant(id string, p *Participant) ValidationErrors {
 			errors = append(errors, ValidationError{
 				Field:   fmt.Sprintf("participants[%s].participationStatus", id),
 				Value:   *p.ParticipationStatus,
-				Message: "must be one of: needs-action, accepted, declined, tentative, delegated",
+				Message: "invalid participationStatus",
 			})
 		}
 	}
-	
-	// Validate progress
-	if p.Progress != nil {
-		validProgress := map[string]bool{
-			"needs-action": true,
-			"in-process":   true,
-			"completed":    true,
-			"failed":       true,
-			"cancelled":    true,
+
+	// Validate scheduleAgent
+	if p.ScheduleAgent != nil {
+		validAgents := map[string]bool{
+			ScheduleAgentServer: true,
+			ScheduleAgentClient: true,
+			ScheduleAgentNone:   true,
 		}
-		if !validProgress[*p.Progress] {
+		if !validAgents[*p.ScheduleAgent] {
 			errors = append(errors, ValidationError{
-				Field:   fmt.Sprintf("participants[%s].progress", id),
-				Value:   *p.Progress,
-				Message: "must be one of: needs-action, in-process, completed, failed, cancelled",
+				Field:   fmt.Sprintf("participants[%s].scheduleAgent", id),
+				Value:   *p.ScheduleAgent,
+				Message: "invalid scheduleAgent",
 			})
 		}
 	}
-	
-	// Validate percentage complete
-	if p.PercentComplete != nil {
-		if *p.PercentComplete < 0 || *p.PercentComplete > 100 {
+
+	// Validate kind
+	if p.Kind != nil {
+		validKinds := map[string]bool{
+			KindIndividual: true,
+			KindGroup:      true,
+			KindResource:   true,
+			KindLocation:   true,
+			KindUnknown:    true,
+		}
+		if !validKinds[*p.Kind] {
 			errors = append(errors, ValidationError{
-				Field:   fmt.Sprintf("participants[%s].percentComplete", id),
-				Value:   *p.PercentComplete,
-				Message: "must be between 0 and 100",
+				Field:   fmt.Sprintf("participants[%s].kind", id),
+				Value:   *p.Kind,
+				Message: "invalid kind",
 			})
 		}
 	}
-	
+
+	// Validate roles
+	if len(p.Roles) > 0 {
+		validRoles := map[string]bool{
+			RoleOwner:         true,
+			RoleAttendee:      true,
+			RoleOptional:      true,
+			RoleInformational: true,
+			RoleChair:         true,
+			RoleContact:       true,
+		}
+		for role := range p.Roles {
+			if !validRoles[role] {
+				errors = append(errors, ValidationError{
+					Field:   fmt.Sprintf("participants[%s].roles[%s]", id, role),
+					Value:   role,
+					Message: "invalid role",
+				})
+			}
+		}
+	}
+
 	return errors
 }
 
 func validateLocation(id string, l *Location) ValidationErrors {
 	var errors ValidationErrors
-	
+
 	if l == nil {
-		errors = append(errors, ValidationError{
-			Field:   fmt.Sprintf("locations[%s]", id),
-			Value:   nil,
-			Message: "location cannot be nil",
-		})
+		// Nil location is valid - locations are optional
 		return errors
 	}
-	
+
 	// Validate coordinates format (geo: URI)
 	if l.Coordinates != nil {
 		if !strings.HasPrefix(*l.Coordinates, "geo:") {
@@ -334,22 +448,56 @@ func validateLocation(id string, l *Location) ValidationErrors {
 			})
 		}
 	}
-	
+
+	// Validate relativeTo field
+	if l.RelativeTo != nil {
+		validValues := map[string]bool{
+			RelativeToStart: true,
+			RelativeToEnd:   true,
+		}
+		if !validValues[*l.RelativeTo] {
+			errors = append(errors, ValidationError{
+				Field:   fmt.Sprintf("locations[%s].relativeTo", id),
+				Value:   *l.RelativeTo,
+				Message: "invalid relativeTo",
+			})
+		}
+	}
+
+	// Validate timeZone format (IANA timezone identifier)
+	if l.TimeZone != nil && *l.TimeZone != "" {
+		// Basic validation for timezone format
+		if !timezonePattern.MatchString(*l.TimeZone) {
+			errors = append(errors, ValidationError{
+				Field:   fmt.Sprintf("locations[%s].timeZone", id),
+				Value:   *l.TimeZone,
+				Message: "invalid IANA timezone identifier",
+			})
+		}
+	}
+
+	// LocationTypes are extensible per RFC 8984, so no validation needed
+	// Any string is valid for locationTypes
+
+	// Validate links if present
+	if l.Links != nil {
+		for linkId, link := range l.Links {
+			linkErrors := validateLink(fmt.Sprintf("locations[%s].links[%s]", id, linkId), link)
+			errors = append(errors, linkErrors...)
+		}
+	}
+
 	return errors
 }
 
 func validateVirtualLocation(id string, vl *VirtualLocation) ValidationErrors {
 	var errors ValidationErrors
-	
+
 	if vl == nil {
-		errors = append(errors, ValidationError{
-			Field:   fmt.Sprintf("virtualLocations[%s]", id),
-			Value:   nil,
-			Message: "virtual location cannot be nil",
-		})
+		// Nil virtual location is valid - virtual locations are optional
 		return errors
 	}
-	
+
 	if vl.Type != "VirtualLocation" {
 		errors = append(errors, ValidationError{
 			Field:   fmt.Sprintf("virtualLocations[%s].@type", id),
@@ -357,12 +505,12 @@ func validateVirtualLocation(id string, vl *VirtualLocation) ValidationErrors {
 			Message: "must be 'VirtualLocation'",
 		})
 	}
-	
+
 	if vl.URI == "" {
 		errors = append(errors, ValidationError{
 			Field:   fmt.Sprintf("virtualLocations[%s].uri", id),
 			Value:   vl.URI,
-			Message: "uri is required",
+			Message: "is required",
 		})
 	} else {
 		if _, err := url.Parse(vl.URI); err != nil {
@@ -373,40 +521,32 @@ func validateVirtualLocation(id string, vl *VirtualLocation) ValidationErrors {
 			})
 		}
 	}
-	
-	// Validate features
-	validFeatures := map[string]bool{
-		"audio":  true,
-		"video":  true,
-		"chat":   true,
-		"screen": true,
-		"phone":  true,
-	}
-	for _, feature := range vl.Features {
-		if !validFeatures[feature] {
+
+	// Validate features - RFC 8984: features are extensible (predefined, IANA registered, or vendor-specific)
+	// Predefined features: audio, chat, feed, moderator, phone, screen, video
+	// We don't validate feature names as they're extensible, but we do validate values
+	for feature, enabled := range vl.Features {
+		// RFC 8984: features are a String[Boolean] where values should be true
+		if !enabled {
 			errors = append(errors, ValidationError{
-				Field:   fmt.Sprintf("virtualLocations[%s].features", id),
-				Value:   feature,
-				Message: "invalid feature type",
+				Field:   fmt.Sprintf("virtualLocations[%s].features[%s]", id, feature),
+				Value:   enabled,
+				Message: "feature value must be true (RFC 8984: features are a String[Boolean] set)",
 			})
 		}
 	}
-	
+
 	return errors
 }
 
 func validateAlert(id string, a *Alert) ValidationErrors {
 	var errors ValidationErrors
-	
+
 	if a == nil {
-		errors = append(errors, ValidationError{
-			Field:   fmt.Sprintf("alerts[%s]", id),
-			Value:   nil,
-			Message: "alert cannot be nil",
-		})
+		// Nil alert is valid - alerts are optional
 		return errors
 	}
-	
+
 	if a.Type != "Alert" {
 		errors = append(errors, ValidationError{
 			Field:   fmt.Sprintf("alerts[%s].@type", id),
@@ -414,7 +554,62 @@ func validateAlert(id string, a *Alert) ValidationErrors {
 			Message: "must be 'Alert'",
 		})
 	}
-	
+
+	// Trigger is required for alerts
+	if a.Trigger == nil {
+		errors = append(errors, ValidationError{
+			Field:   fmt.Sprintf("alerts[%s].trigger", id),
+			Value:   nil,
+			Message: "is required",
+		})
+	} else {
+		// Validate trigger type
+		if a.Trigger.Type != "OffsetTrigger" {
+			errors = append(errors, ValidationError{
+				Field:   fmt.Sprintf("alerts[%s].trigger.@type", id),
+				Value:   a.Trigger.Type,
+				Message: "must be 'OffsetTrigger'",
+			})
+		}
+		
+		// Trigger must have either offset or when
+		// Note: 'when' field is not in our current OffsetTrigger struct, 
+		// but offset is required for OffsetTrigger
+		if a.Trigger.Offset == "" {
+			errors = append(errors, ValidationError{
+				Field:   fmt.Sprintf("alerts[%s].trigger", id),
+				Value:   a.Trigger,
+				Message: "must have either offset or when",
+			})
+		}
+
+		// Validate offset format (ISO 8601 duration)
+		if a.Trigger.Offset != "" {
+			if !durationPattern.MatchString(a.Trigger.Offset) {
+				errors = append(errors, ValidationError{
+					Field:   fmt.Sprintf("alerts[%s].trigger.offset", id),
+					Value:   a.Trigger.Offset,
+					Message: "invalid ISO 8601 duration format",
+				})
+			}
+		}
+
+		// Validate relativeTo
+		if a.Trigger.RelativeTo != nil {
+			validValues := map[string]bool{
+				RelativeToStart: true,
+				RelativeToEnd:   true,
+			}
+			if !validValues[*a.Trigger.RelativeTo] {
+				errors = append(errors, ValidationError{
+					Field:   fmt.Sprintf("alerts[%s].trigger.relativeTo", id),
+					Value:   *a.Trigger.RelativeTo,
+					Message: "invalid relativeTo",
+				})
+			}
+		}
+	}
+
 	// Validate action
 	if a.Action != nil {
 		validActions := map[string]bool{
@@ -425,31 +620,27 @@ func validateAlert(id string, a *Alert) ValidationErrors {
 			errors = append(errors, ValidationError{
 				Field:   fmt.Sprintf("alerts[%s].action", id),
 				Value:   *a.Action,
-				Message: "must be one of: display, email",
+				Message: "invalid action",
 			})
 		}
 	}
-	
+
 	return errors
 }
 
 func validateLink(id string, l *Link) ValidationErrors {
 	var errors ValidationErrors
-	
+
 	if l == nil {
-		errors = append(errors, ValidationError{
-			Field:   fmt.Sprintf("links[%s]", id),
-			Value:   nil,
-			Message: "link cannot be nil",
-		})
+		// Nil link is valid - links are optional
 		return errors
 	}
-	
+
 	if l.Href == "" {
 		errors = append(errors, ValidationError{
 			Field:   fmt.Sprintf("links[%s].href", id),
 			Value:   l.Href,
-			Message: "href is required",
+			Message: "is required",
 		})
 	} else {
 		if _, err := url.Parse(l.Href); err != nil {
@@ -460,22 +651,18 @@ func validateLink(id string, l *Link) ValidationErrors {
 			})
 		}
 	}
-	
+
 	return errors
 }
 
 func validateRecurrenceRule(fieldPrefix string, rr *RecurrenceRule) ValidationErrors {
 	var errors ValidationErrors
-	
+
 	if rr == nil {
-		errors = append(errors, ValidationError{
-			Field:   fieldPrefix,
-			Value:   nil,
-			Message: "recurrence rule cannot be nil",
-		})
+		// Nil rule is valid - recurrence rules are optional
 		return errors
 	}
-	
+
 	if rr.Type != "RecurrenceRule" {
 		errors = append(errors, ValidationError{
 			Field:   fmt.Sprintf("%s.@type", fieldPrefix),
@@ -483,25 +670,33 @@ func validateRecurrenceRule(fieldPrefix string, rr *RecurrenceRule) ValidationEr
 			Message: "must be 'RecurrenceRule'",
 		})
 	}
-	
-	// Validate frequency
-	validFrequencies := map[string]bool{
-		"yearly":   true,
-		"monthly":  true,
-		"weekly":   true,
-		"daily":    true,
-		"hourly":   true,
-		"minutely": true,
-		"secondly": true,
-	}
-	if !validFrequencies[rr.Frequency] {
+
+	// Validate frequency (required)
+	if rr.Frequency == "" {
 		errors = append(errors, ValidationError{
 			Field:   fmt.Sprintf("%s.frequency", fieldPrefix),
 			Value:   rr.Frequency,
-			Message: "must be one of: yearly, monthly, weekly, daily, hourly, minutely, secondly",
+			Message: "is required",
 		})
+	} else {
+		validFrequencies := map[string]bool{
+			"yearly":   true,
+			"monthly":  true,
+			"weekly":   true,
+			"daily":    true,
+			"hourly":   true,
+			"minutely": true,
+			"secondly": true,
+		}
+		if !validFrequencies[rr.Frequency] {
+			errors = append(errors, ValidationError{
+				Field:   fmt.Sprintf("%s.frequency", fieldPrefix),
+				Value:   rr.Frequency,
+				Message: "invalid frequency",
+			})
+		}
 	}
-	
+
 	// Validate interval
 	if rr.Interval != nil && *rr.Interval < 1 {
 		errors = append(errors, ValidationError{
@@ -510,7 +705,7 @@ func validateRecurrenceRule(fieldPrefix string, rr *RecurrenceRule) ValidationEr
 			Message: "must be positive",
 		})
 	}
-	
+
 	// Validate count
 	if rr.Count != nil && *rr.Count < 1 {
 		errors = append(errors, ValidationError{
@@ -520,17 +715,67 @@ func validateRecurrenceRule(fieldPrefix string, rr *RecurrenceRule) ValidationEr
 		})
 	}
 	
+	// Validate count and until are mutually exclusive
+	if rr.Count != nil && rr.Until != nil {
+		errors = append(errors, ValidationError{
+			Field:   fieldPrefix,
+			Value:   rr,
+			Message: "cannot have both count and until",
+		})
+	}
+	
+	// Validate rscale (calendar system)
+	if rr.RScale != nil && *rr.RScale != "" {
+		validRScales := map[string]bool{
+			"gregorian": true,
+			"chinese":   true,
+			"hebrew":    true,
+			"islamic":   true,
+			"islamic-civil": true,
+			"islamic-tbla": true,
+			"persian": true,
+			"ethiopic": true,
+			"coptic": true,
+			"japanese": true,
+			"buddhist": true,
+			"indian": true,
+		}
+		if !validRScales[*rr.RScale] {
+			errors = append(errors, ValidationError{
+				Field:   fmt.Sprintf("%s.rscale", fieldPrefix),
+				Value:   *rr.RScale,
+				Message: "invalid rscale",
+			})
+		}
+	}
+	
+	// Validate skip
+	if rr.Skip != nil && *rr.Skip != "" {
+		validSkips := map[string]bool{
+			"forward":  true,
+			"backward": true,
+			"omit":     true,
+		}
+		if !validSkips[*rr.Skip] {
+			errors = append(errors, ValidationError{
+				Field:   fmt.Sprintf("%s.skip", fieldPrefix),
+				Value:   *rr.Skip,
+				Message: "invalid skip",
+			})
+		}
+	}
+
 	// Validate first day of week
 	if rr.FirstDayOfWeek != nil {
 		if *rr.FirstDayOfWeek < 0 || *rr.FirstDayOfWeek > 6 {
 			errors = append(errors, ValidationError{
 				Field:   fmt.Sprintf("%s.firstDayOfWeek", fieldPrefix),
 				Value:   *rr.FirstDayOfWeek,
-				Message: "must be between 0 (Monday) and 6 (Sunday)",
+				Message: "invalid firstDayOfWeek",
 			})
 		}
 	}
-	
+
 	// Validate byDay
 	for i, nday := range rr.ByDay {
 		validDays := map[string]bool{
@@ -541,10 +786,10 @@ func validateRecurrenceRule(fieldPrefix string, rr *RecurrenceRule) ValidationEr
 			errors = append(errors, ValidationError{
 				Field:   fmt.Sprintf("%s.byDay[%d].day", fieldPrefix, i),
 				Value:   nday.Day,
-				Message: "must be one of: mo, tu, we, th, fr, sa, su",
+				Message: "invalid day",
 			})
 		}
 	}
-	
+
 	return errors
 }

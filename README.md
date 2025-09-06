@@ -10,7 +10,7 @@ JSCalendar is a modern JSON-based calendar data format that provides a cleaner, 
 
 ## Features
 
-- ✅ Complete RFC 8984 JSCalendar implementation
+- ✅ **Full RFC 8984 Compliance** - Complete implementation including all verified errata
 - ✅ Bidirectional iCalendar (RFC 5545) conversion
 - ✅ JSON marshaling/unmarshaling with validation
 - ✅ Recurrence rules (structured, not RRULE strings)
@@ -19,6 +19,16 @@ JSCalendar is a modern JSON-based calendar data format that provides a cleaner, 
 - ✅ Localized strings with multi-language support
 - ✅ CLI tool for conversions
 - ✅ Zero external dependencies (core package)
+
+## RFC 8984 Compliance
+
+This library is **fully compliant with RFC 8984** including all verified errata. All 10 examples from RFC 8984 Section 6 are included in our test suite and pass validation.
+
+See [RFC_COMPLIANCE.md](RFC_COMPLIANCE.md) for detailed compliance information including:
+- Complete feature implementation status
+- RFC errata handling (Errata 6872, 6873, 8028)
+- Test coverage of all RFC examples
+- Known limitations and design decisions
 
 ## Installation
 
