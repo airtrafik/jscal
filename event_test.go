@@ -66,18 +66,18 @@ func TestEventPrettyJSON(t *testing.T) {
 	event.Description = String("This is a test event")
 	event.Start = NewLocalDateTime(time.Date(2025, 3, 1, 14, 0, 0, 0, time.UTC))
 	event.Duration = String("PT1H")
-	
+
 	pretty, err := event.PrettyJSON()
 	if err != nil {
 		t.Fatalf("PrettyJSON() error = %v", err)
 	}
-	
+
 	// Check that it's properly formatted with indentation
 	lines := strings.Split(string(pretty), "\n")
 	if len(lines) < 5 {
 		t.Error("PrettyJSON should produce multiple lines")
 	}
-	
+
 	// Check for indentation
 	hasIndentation := false
 	for _, line := range lines {
@@ -89,13 +89,13 @@ func TestEventPrettyJSON(t *testing.T) {
 	if !hasIndentation {
 		t.Error("PrettyJSON should include indentation")
 	}
-	
+
 	// Verify it's valid JSON
 	var decoded Event
 	if err := json.Unmarshal(pretty, &decoded); err != nil {
 		t.Errorf("PrettyJSON output is not valid JSON: %v", err)
 	}
-	
+
 	// Verify content
 	if decoded.UID != event.UID {
 		t.Error("PrettyJSON should preserve UID")
@@ -117,16 +117,16 @@ func TestEventClone(t *testing.T) {
 	original.Priority = Int(5)
 	original.Categories = map[string]bool{"meeting": true, "important": true}
 	original.Keywords = map[string]bool{"project": true, "deadline": true}
-	
+
 	// Add participant
 	participant := NewParticipant("John Doe", "john@example.com")
 	participant.ParticipationStatus = String(ParticipationAccepted)
 	original.AddParticipant("john@example.com", participant)
-	
+
 	// Add location
 	location := NewLocation("Conference Room")
 	original.AddLocation("loc1", location)
-	
+
 	// Add alert
 	alert := &Alert{
 		Trigger: &OffsetTrigger{
@@ -134,26 +134,26 @@ func TestEventClone(t *testing.T) {
 		},
 	}
 	original.AddAlert("alert1", alert)
-	
+
 	// Add link
 	link := NewLink("https://example.com/event")
 	original.AddLink("link1", link)
-	
+
 	// Add recurrence
 	rule := &RecurrenceRule{
 		Frequency: FrequencyWeekly,
 		ByDay:     []NDay{{Day: "mo"}, {Day: "we"}},
 	}
 	original.RecurrenceRules = []RecurrenceRule{*rule}
-	
+
 	// Clone the event
 	cloned := original.Clone()
-	
+
 	// Verify it's a different instance
 	if cloned == original {
 		t.Error("Clone() should return a new instance")
 	}
-	
+
 	// Verify all fields are copied
 	if cloned.UID != original.UID {
 		t.Error("Clone() should preserve UID")
@@ -182,7 +182,7 @@ func TestEventClone(t *testing.T) {
 	if cloned.Priority == nil || *cloned.Priority != *original.Priority {
 		t.Error("Clone() should preserve Priority")
 	}
-	
+
 	// Verify collections are deep copied
 	if len(cloned.Categories) != len(original.Categories) {
 		t.Error("Clone() should preserve Categories")
@@ -206,13 +206,13 @@ func TestEventClone(t *testing.T) {
 	if len(cloned.RecurrenceRules) != len(original.RecurrenceRules) {
 		t.Error("Clone() should preserve RecurrenceRules")
 	}
-	
+
 	// Modify the clone and verify original is unchanged
 	cloned.Title = String("Modified Title")
 	if *original.Title == "Modified Title" {
 		t.Error("Modifying clone should not affect original")
 	}
-	
+
 	// Modify collections in clone
 	cloned.Categories["new-category"] = true
 	if original.Categories["new-category"] {
@@ -337,12 +337,12 @@ func TestEventTouch(t *testing.T) {
 
 func TestAddLocation(t *testing.T) {
 	event := NewEvent("test-123", "Test Event")
-	
+
 	// Add first location
 	loc1 := NewLocation("Conference Room A")
 	loc1.Description = String("Main conference room")
 	event.AddLocation("main", loc1)
-	
+
 	if len(event.Locations) != 1 {
 		t.Error("AddLocation should add location")
 	}
@@ -352,19 +352,19 @@ func TestAddLocation(t *testing.T) {
 	if event.Locations["main"].Name == nil || *event.Locations["main"].Name != "Conference Room A" {
 		t.Error("Location details should be preserved")
 	}
-	
+
 	// Add second location
 	loc2 := NewLocation("Conference Room B")
 	event.AddLocation("backup", loc2)
-	
+
 	if len(event.Locations) != 2 {
 		t.Error("Should have 2 locations")
 	}
-	
+
 	// Override existing location
 	loc3 := NewLocation("Conference Room C")
 	event.AddLocation("main", loc3)
-	
+
 	if len(event.Locations) != 2 {
 		t.Error("Overriding should not increase count")
 	}
@@ -375,11 +375,11 @@ func TestAddLocation(t *testing.T) {
 
 func TestAddVirtualLocation(t *testing.T) {
 	event := NewEvent("test-123", "Test Event")
-	
+
 	// Add first virtual location
 	vLoc1 := NewVirtualLocation("Team Standup", "https://zoom.us/j/123456789")
 	event.AddVirtualLocation("zoom", vLoc1)
-	
+
 	if len(event.VirtualLocations) != 1 {
 		t.Error("AddVirtualLocation should add virtual location")
 	}
@@ -389,20 +389,20 @@ func TestAddVirtualLocation(t *testing.T) {
 	if event.VirtualLocations["zoom"].URI != "https://zoom.us/j/123456789" {
 		t.Error("Virtual location URI should be preserved")
 	}
-	
+
 	// Add second virtual location
 	vLoc2 := NewVirtualLocation("Meeting", "https://meet.google.com/abc-defg-hij")
 	event.AddVirtualLocation("meet", vLoc2)
-	
+
 	if len(event.VirtualLocations) != 2 {
 		t.Error("Should have 2 virtual locations")
 	}
-	
+
 	// Add virtual location with features
 	vLoc3 := NewVirtualLocation("Team Meeting", "https://teams.microsoft.com/meeting")
 	vLoc3.Features = map[string]bool{"audio": true, "video": true, "screen-share": true}
 	event.AddVirtualLocation("teams", vLoc3)
-	
+
 	if len(event.VirtualLocations) != 3 {
 		t.Error("Should have 3 virtual locations")
 	}
@@ -413,7 +413,7 @@ func TestAddVirtualLocation(t *testing.T) {
 
 func TestAddAlert(t *testing.T) {
 	event := NewEvent("test-123", "Test Event")
-	
+
 	// Add first alert
 	alert1 := &Alert{
 		Trigger: &OffsetTrigger{
@@ -422,7 +422,7 @@ func TestAddAlert(t *testing.T) {
 		Action: String("display"),
 	}
 	event.AddAlert("15min", alert1)
-	
+
 	if len(event.Alerts) != 1 {
 		t.Error("AddAlert should add alert")
 	}
@@ -432,7 +432,7 @@ func TestAddAlert(t *testing.T) {
 	if event.Alerts["15min"].Trigger.Offset != "-PT15M" {
 		t.Error("Alert details should be preserved")
 	}
-	
+
 	// Add second alert
 	alert2 := &Alert{
 		Trigger: &OffsetTrigger{
@@ -441,11 +441,11 @@ func TestAddAlert(t *testing.T) {
 		Action: String("email"),
 	}
 	event.AddAlert("1hour", alert2)
-	
+
 	if len(event.Alerts) != 2 {
 		t.Error("Should have 2 alerts")
 	}
-	
+
 	// Add alert with absolute time
 	alert3 := &Alert{
 		Trigger: &OffsetTrigger{
@@ -453,7 +453,7 @@ func TestAddAlert(t *testing.T) {
 		},
 	}
 	event.AddAlert("absolute", alert3)
-	
+
 	if len(event.Alerts) != 3 {
 		t.Error("Should have 3 alerts")
 	}
@@ -461,26 +461,26 @@ func TestAddAlert(t *testing.T) {
 
 func TestAddKeyword(t *testing.T) {
 	event := NewEvent("test-123", "Test Event")
-	
+
 	// Add keywords
 	event.AddKeyword("urgent")
 	if len(event.Keywords) != 1 || !event.Keywords["urgent"] {
 		t.Error("AddKeyword should add keyword")
 	}
-	
+
 	// Add more keywords
 	event.AddKeyword("project")
 	event.AddKeyword("deadline")
-	
+
 	if len(event.Keywords) != 3 {
 		t.Error("Should have 3 keywords")
 	}
-	
+
 	// Verify keywords exist
 	if !event.Keywords["urgent"] || !event.Keywords["project"] || !event.Keywords["deadline"] {
 		t.Error("Keywords not added correctly")
 	}
-	
+
 	// Add duplicate keyword (should not duplicate in map)
 	event.AddKeyword("urgent")
 	if len(event.Keywords) != 3 {
@@ -490,12 +490,12 @@ func TestAddKeyword(t *testing.T) {
 
 func TestAddLink(t *testing.T) {
 	event := NewEvent("test-123", "Test Event")
-	
+
 	// Add first link
 	link1 := NewLink("https://example.com/event")
 	link1.Title = String("Event Details")
 	event.AddLink("details", link1)
-	
+
 	if len(event.Links) != 1 {
 		t.Error("AddLink should add link")
 	}
@@ -505,17 +505,17 @@ func TestAddLink(t *testing.T) {
 	if event.Links["details"].Href != "https://example.com/event" {
 		t.Error("Link href should be preserved")
 	}
-	
+
 	// Add second link
 	link2 := NewLink("https://example.com/agenda.pdf")
 	link2.ContentType = String("application/pdf")
 	link2.Size = Int(204800)
 	event.AddLink("agenda", link2)
-	
+
 	if len(event.Links) != 2 {
 		t.Error("Should have 2 links")
 	}
-	
+
 	// Add link with all properties
 	link3 := NewLink("https://example.com/icon.png")
 	link3.ContentType = String("image/png")
@@ -524,7 +524,7 @@ func TestAddLink(t *testing.T) {
 	link3.Display = String("badge")
 	link3.Title = String("Event Icon")
 	event.AddLink("icon", link3)
-	
+
 	if len(event.Links) != 3 {
 		t.Error("Should have 3 links")
 	}
@@ -535,21 +535,21 @@ func TestAddLink(t *testing.T) {
 
 func TestSetRecurrence(t *testing.T) {
 	event := NewEvent("test-123", "Test Event")
-	
+
 	// Set simple daily recurrence
 	rule1 := &RecurrenceRule{
 		Frequency: FrequencyDaily,
 		Count:     Int(10),
 	}
 	event.RecurrenceRules = []RecurrenceRule{*rule1}
-	
+
 	if !event.IsRecurring() {
 		t.Error("Event should be recurring")
 	}
 	if len(event.RecurrenceRules) != 1 {
 		t.Error("Should have 1 recurrence rule")
 	}
-	
+
 	// Set weekly recurrence with specific days
 	rule2 := &RecurrenceRule{
 		Frequency: FrequencyWeekly,
@@ -557,17 +557,17 @@ func TestSetRecurrence(t *testing.T) {
 		Until:     NewLocalDateTime(time.Time{}),
 	}
 	event.RecurrenceRules = []RecurrenceRule{*rule2}
-	
+
 	if len(event.RecurrenceRules) != 1 {
 		t.Error("SetRecurrence should replace existing rules")
 	}
 	if event.RecurrenceRules[0].Frequency != FrequencyWeekly {
 		t.Error("New rule should be set")
 	}
-	
+
 	// Set recurrence with overrides
 	rule3 := &RecurrenceRule{
-		Frequency: FrequencyMonthly,
+		Frequency:  FrequencyMonthly,
 		ByMonthDay: []int{15},
 	}
 	event.RecurrenceRules = []RecurrenceRule{*rule3}
@@ -579,14 +579,14 @@ func TestSetRecurrence(t *testing.T) {
 			"sequence": 1,
 		},
 	}
-	
+
 	if len(event.RecurrenceOverrides) != 1 {
 		t.Error("Should have 1 recurrence override")
 	}
 	if title, ok := event.RecurrenceOverrides["20250415T140000"]["title"].(string); !ok || title != "Special Instance" {
 		t.Error("Override should be preserved")
 	}
-	
+
 	// Clear recurrence
 	event.RecurrenceRules = nil
 	event.RecurrenceOverrides = nil
@@ -603,28 +603,28 @@ func TestSetRecurrence(t *testing.T) {
 
 func TestIsRecurring(t *testing.T) {
 	event := NewEvent("test-123", "Test Event")
-	
+
 	// Initially not recurring
 	if event.IsRecurring() {
 		t.Error("New event should not be recurring")
 	}
-	
+
 	// Add recurrence rule
 	rule := &RecurrenceRule{
 		Frequency: FrequencyWeekly,
 	}
 	event.RecurrenceRules = []RecurrenceRule{*rule}
-	
+
 	if !event.IsRecurring() {
 		t.Error("Event with recurrence rule should be recurring")
 	}
-	
+
 	// Empty rules slice
 	event.RecurrenceRules = []RecurrenceRule{}
 	if event.IsRecurring() {
 		t.Error("Event with empty rules should not be recurring")
 	}
-	
+
 	// Nil rules
 	event.RecurrenceRules = nil
 	if event.IsRecurring() {

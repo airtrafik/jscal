@@ -7,11 +7,11 @@ import (
 
 func TestParse(t *testing.T) {
 	tests := []struct {
-		name    string
-		data    []byte
-		wantUID string
+		name     string
+		data     []byte
+		wantUID  string
 		wantType string
-		wantErr bool
+		wantErr  bool
 	}{
 		{
 			name: "parse Event",
@@ -21,9 +21,9 @@ func TestParse(t *testing.T) {
 				"title": "Test Event",
 				"start": "2024-01-01T10:00:00"
 			}`),
-			wantUID: "event-1",
+			wantUID:  "event-1",
 			wantType: "Event",
-			wantErr: false,
+			wantErr:  false,
 		},
 		{
 			name: "parse Task",
@@ -33,9 +33,9 @@ func TestParse(t *testing.T) {
 				"title": "Test Task",
 				"due": "2024-01-01T10:00:00"
 			}`),
-			wantUID: "task-1",
+			wantUID:  "task-1",
 			wantType: "Task",
-			wantErr: false,
+			wantErr:  false,
 		},
 		{
 			name: "parse Group",
@@ -45,9 +45,9 @@ func TestParse(t *testing.T) {
 				"name": "Test Group",
 				"entries": []
 			}`),
-			wantUID: "group-1",
+			wantUID:  "group-1",
 			wantType: "Group",
-			wantErr: false,
+			wantErr:  false,
 		},
 		{
 			name: "missing @type field",
@@ -66,8 +66,8 @@ func TestParse(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "invalid JSON",
-			data: []byte(`{"@type": "Event", invalid`),
+			name:    "invalid JSON",
+			data:    []byte(`{"@type": "Event", invalid`),
 			wantErr: true,
 		},
 	}
@@ -99,9 +99,9 @@ func TestParseAll(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "empty array",
-			data: []byte(`[]`),
-			want: 0,
+			name:    "empty array",
+			data:    []byte(`[]`),
+			want:    0,
 			wantErr: false,
 		},
 		{
@@ -126,7 +126,7 @@ func TestParseAll(t *testing.T) {
 					"entries": []
 				}
 			]`),
-			want: 3,
+			want:    3,
 			wantErr: false,
 		},
 		{
@@ -145,7 +145,7 @@ func TestParseAll(t *testing.T) {
 					"start": "2024-01-02T10:00:00"
 				}
 			]`),
-			want: 2,
+			want:    2,
 			wantErr: false,
 		},
 		{
@@ -164,12 +164,12 @@ func TestParseAll(t *testing.T) {
 					"due": "2024-01-02T10:00:00"
 				}
 			]`),
-			want: 2,
+			want:    2,
 			wantErr: false,
 		},
 		{
-			name: "invalid JSON array",
-			data: []byte(`[{"@type": "Event", invalid`),
+			name:    "invalid JSON array",
+			data:    []byte(`[{"@type": "Event", invalid`),
 			wantErr: true,
 		},
 		{
@@ -189,8 +189,8 @@ func TestParseAll(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "not an array",
-			data: []byte(`{"@type": "Event", "uid": "test-1"}`),
+			name:    "not an array",
+			data:    []byte(`{"@type": "Event", "uid": "test-1"}`),
 			wantErr: true,
 		},
 	}
@@ -213,31 +213,31 @@ func TestParseAllMixedTypes(t *testing.T) {
 	// Create a mixed collection
 	event := NewEvent("event-1", "Team Meeting")
 	event.Start = NewLocalDateTime(time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC))
-	
+
 	task := NewTask("task-1", "Complete Project")
 	task.Due = NewLocalDateTime(time.Date(2024, 1, 15, 17, 0, 0, 0, time.UTC))
 	task.PercentComplete = Int(50)
-	
+
 	group := NewGroup("group-1", "January Events")
-	
+
 	// Marshal them to JSON
 	eventJSON, _ := event.JSON()
 	taskJSON, _ := task.JSON()
 	groupJSON, _ := group.JSON()
-	
+
 	// Create a JSON array string
 	arrayJSON := []byte(`[` + string(eventJSON) + `,` + string(taskJSON) + `,` + string(groupJSON) + `]`)
-	
+
 	// Parse the mixed array
 	objects, err := ParseAll(arrayJSON)
 	if err != nil {
 		t.Fatalf("ParseAll() failed: %v", err)
 	}
-	
+
 	if len(objects) != 3 {
 		t.Fatalf("ParseAll() returned %d objects, want 3", len(objects))
 	}
-	
+
 	// Verify types
 	expectedTypes := []string{"Event", "Task", "Group"}
 	for i, obj := range objects {
@@ -245,7 +245,7 @@ func TestParseAllMixedTypes(t *testing.T) {
 			t.Errorf("Object %d has type %s, want %s", i, obj.GetType(), expectedTypes[i])
 		}
 	}
-	
+
 	// Verify we can type-assert them back
 	if _, ok := objects[0].(*Event); !ok {
 		t.Error("First object should be an Event")
@@ -266,30 +266,30 @@ func TestParseValidation(t *testing.T) {
 		"title": "Invalid Event",
 		"start": "2024-01-01T10:00:00"
 	}`)
-	
+
 	_, err := Parse(invalidEvent)
 	if err == nil {
 		t.Error("Parse() should fail for invalid Event with empty UID")
 	}
-	
+
 	invalidTask := []byte(`{
 		"@type": "Task",
 		"uid": "",
 		"title": "Invalid Task",
 		"due": "2024-01-01T10:00:00"
 	}`)
-	
+
 	_, err = Parse(invalidTask)
 	if err == nil {
 		t.Error("Parse() should fail for invalid Task with empty UID")
 	}
-	
+
 	invalidGroup := []byte(`{
 		"@type": "Group",
 		"uid": "",
 		"name": "Invalid Group"
 	}`)
-	
+
 	_, err = Parse(invalidGroup)
 	if err == nil {
 		t.Error("Parse() should fail for invalid Group with empty UID")

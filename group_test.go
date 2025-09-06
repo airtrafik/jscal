@@ -48,7 +48,7 @@ func TestNewGroup(t *testing.T) {
 func TestGroupJSON(t *testing.T) {
 	group := NewGroup("group-123", "Test Group")
 	group.Description = String("A test group")
-	
+
 	// Test basic group without entries first
 	jsonData, err := group.JSON()
 	if err != nil {
@@ -181,7 +181,7 @@ func TestGroupGetEventsAndTasks(t *testing.T) {
 	event2 := NewEvent("event-2", "Event 2")
 	task1 := NewTask("task-1", "Task 1")
 	task2 := NewTask("task-2", "Task 2")
-	
+
 	_ = group.AddEntry(event1)
 	_ = group.AddEntry(task1)
 	_ = group.AddEntry(event2)

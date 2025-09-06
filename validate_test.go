@@ -774,7 +774,7 @@ func TestValidateParticipant(t *testing.T) {
 		{
 			name: "invalid role",
 			participant: &Participant{
-				Name:  String("John Doe"),
+				Name: String("John Doe"),
 				Roles: map[string]bool{
 					"invalid-role": true,
 				},
@@ -1098,8 +1098,8 @@ func TestValidateAlert(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:    "empty alert",
-			alert:   &Alert{
+			name: "empty alert",
+			alert: &Alert{
 				Type: "Alert",
 			},
 			wantErr: true,
@@ -1119,7 +1119,7 @@ func TestValidateAlert(t *testing.T) {
 		{
 			name: "alert with neither offset nor when",
 			alert: &Alert{
-				Type:    "Alert",
+				Type: "Alert",
 				Trigger: &OffsetTrigger{
 					Type: "OffsetTrigger",
 				},

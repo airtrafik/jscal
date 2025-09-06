@@ -6,6 +6,9 @@ import (
 	"time"
 )
 
+// Task should implement CalendarObject
+var _ CalendarObject = &Task{}
+
 // Task represents a JSCalendar Task object according to RFC 8984.
 // A Task represents an action item, assignment, to-do item, or work item.
 // It may start and be due at certain points in time, take some estimated
@@ -124,7 +127,7 @@ func (t *Task) IsOverdue() bool {
 	if t.Due == nil || t.IsCompleted() {
 		return false
 	}
-	
+
 	dueTime := t.Due.Time()
 	return time.Now().After(dueTime)
 }

@@ -114,7 +114,7 @@ cover-view: cover
 #############################
 # Lint targets
 #############################
-lint:
+lint: fmt
 	@echo "=== $(PROJECT_NAME) === [ lint ]: Running linters..."
 	@if command -v $(GOLINTER) >/dev/null 2>&1; then \
 		$(GOLINTER) run ./...; \
@@ -125,7 +125,7 @@ lint:
 	fi
 	@echo "=== $(PROJECT_NAME) === [ lint ]: Linting complete"
 
-lint-fix:
+lint-fix: fmt
 	@echo "=== $(PROJECT_NAME) === [ lint-fix ]: Running linters with auto-fix..."
 	@if command -v $(GOLINTER) >/dev/null 2>&1; then \
 		$(GOLINTER) run --fix ./...; \

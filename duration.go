@@ -16,14 +16,14 @@ func parseISO8601Duration(duration string) (time.Duration, error) {
 	if duration == "" {
 		return 0, fmt.Errorf("invalid ISO 8601 duration: empty string")
 	}
-	
+
 	// Check for negative duration
 	negative := false
 	if strings.HasPrefix(duration, "-") {
 		negative = true
 		duration = duration[1:]
 	}
-	
+
 	if !strings.HasPrefix(duration, "P") {
 		return 0, fmt.Errorf("invalid ISO 8601 duration: must start with P")
 	}
@@ -116,7 +116,7 @@ func parseISO8601Duration(duration string) (time.Duration, error) {
 			}
 		}
 	}
-	
+
 	// Apply negative flag if set
 	if negative {
 		result = -result

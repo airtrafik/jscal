@@ -6,6 +6,9 @@ import (
 	"time"
 )
 
+// Event should implement CalendarObject
+var _ CalendarObject = &Event{}
+
 // Event represents a JSCalendar Event object according to RFC 8984.
 // An Event describes a calendar event such as a meeting, appointment,
 // or reminder with all associated metadata.

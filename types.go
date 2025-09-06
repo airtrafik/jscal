@@ -10,28 +10,28 @@ import (
 
 // Participant represents an event participant
 type Participant struct {
-	Type                 *string            `json:"@type,omitempty"` // Always "Participant"
-	Name                 *string            `json:"name,omitempty"`
-	Email                *string            `json:"email,omitempty"`
-	SendTo               map[string]string  `json:"sendTo,omitempty"` // Contact methods (e.g., {"imip": "mailto:..."})
-	Kind                 *string            `json:"kind,omitempty"`   // individual, group, resource, location
-	Roles                map[string]bool    `json:"roles,omitempty"`  // owner, attendee, optional, informational, chair, contact
-	LocationId           *string            `json:"locationId,omitempty"`
-	Language             *string            `json:"language,omitempty"`
-	ParticipationStatus  *string            `json:"participationStatus,omitempty"` // needs-action, accepted, declined, tentative, delegated
-	ParticipationComment *string            `json:"participationComment,omitempty"`
-	ExpectReply          *bool              `json:"expectReply,omitempty"`
-	ScheduleAgent        *string            `json:"scheduleAgent,omitempty"` // server, client, none
-	ScheduleForceSend    *bool              `json:"scheduleForceSend,omitempty"`
-	ScheduleSequence     *int               `json:"scheduleSequence,omitempty"`
-	ScheduleStatus       []string           `json:"scheduleStatus,omitempty"`
-	ScheduleUpdated      *time.Time         `json:"scheduleUpdated,omitempty"`
-	SentBy               *string            `json:"sentBy,omitempty"` // Email address of sender
-	InvitedBy            *string            `json:"invitedBy,omitempty"`
-	DelegatedTo          map[string]bool    `json:"delegatedTo,omitempty"`
-	DelegatedFrom        map[string]bool    `json:"delegatedFrom,omitempty"`
-	MemberOf             map[string]bool    `json:"memberOf,omitempty"`
-	Links                map[string]*Link   `json:"links,omitempty"`
+	Type                 *string           `json:"@type,omitempty"` // Always "Participant"
+	Name                 *string           `json:"name,omitempty"`
+	Email                *string           `json:"email,omitempty"`
+	SendTo               map[string]string `json:"sendTo,omitempty"` // Contact methods (e.g., {"imip": "mailto:..."})
+	Kind                 *string           `json:"kind,omitempty"`   // individual, group, resource, location
+	Roles                map[string]bool   `json:"roles,omitempty"`  // owner, attendee, optional, informational, chair, contact
+	LocationId           *string           `json:"locationId,omitempty"`
+	Language             *string           `json:"language,omitempty"`
+	ParticipationStatus  *string           `json:"participationStatus,omitempty"` // needs-action, accepted, declined, tentative, delegated
+	ParticipationComment *string           `json:"participationComment,omitempty"`
+	ExpectReply          *bool             `json:"expectReply,omitempty"`
+	ScheduleAgent        *string           `json:"scheduleAgent,omitempty"` // server, client, none
+	ScheduleForceSend    *bool             `json:"scheduleForceSend,omitempty"`
+	ScheduleSequence     *int              `json:"scheduleSequence,omitempty"`
+	ScheduleStatus       []string          `json:"scheduleStatus,omitempty"`
+	ScheduleUpdated      *time.Time        `json:"scheduleUpdated,omitempty"`
+	SentBy               *string           `json:"sentBy,omitempty"` // Email address of sender
+	InvitedBy            *string           `json:"invitedBy,omitempty"`
+	DelegatedTo          map[string]bool   `json:"delegatedTo,omitempty"`
+	DelegatedFrom        map[string]bool   `json:"delegatedFrom,omitempty"`
+	MemberOf             map[string]bool   `json:"memberOf,omitempty"`
+	Links                map[string]*Link  `json:"links,omitempty"`
 }
 
 // Location represents a physical or virtual location
@@ -71,23 +71,23 @@ type Link struct {
 
 // RecurrenceRule represents recurrence rules
 type RecurrenceRule struct {
-	Type           string          `json:"@type"`
-	Frequency      string          `json:"frequency"` // yearly, monthly, weekly, daily, hourly, minutely, secondly
-	Interval       *int            `json:"interval,omitempty"`
-	RScale         *string         `json:"rscale,omitempty"`
-	Skip           *string         `json:"skip,omitempty"`           // omit, backward, forward
-	FirstDayOfWeek *int            `json:"firstDayOfWeek,omitempty"` // 0=Monday, 1=Tuesday, etc.
-	ByDay          []NDay          `json:"byDay,omitempty"`
-	ByMonthDay     []int           `json:"byMonthDay,omitempty"`
-	ByMonth        []string        `json:"byMonth,omitempty"`
-	ByYearDay      []int           `json:"byYearDay,omitempty"`
-	ByWeekNo       []int           `json:"byWeekNo,omitempty"`
-	ByHour         []int           `json:"byHour,omitempty"`
-	ByMinute       []int           `json:"byMinute,omitempty"`
-	BySecond       []int           `json:"bySecond,omitempty"`
-	BySetPos       []int           `json:"bySetPos,omitempty"`
-	Count          *int            `json:"count,omitempty"`
-	Until          *LocalDateTime  `json:"until,omitempty"`
+	Type           string         `json:"@type"`
+	Frequency      string         `json:"frequency"` // yearly, monthly, weekly, daily, hourly, minutely, secondly
+	Interval       *int           `json:"interval,omitempty"`
+	RScale         *string        `json:"rscale,omitempty"`
+	Skip           *string        `json:"skip,omitempty"`           // omit, backward, forward
+	FirstDayOfWeek *int           `json:"firstDayOfWeek,omitempty"` // 0=Monday, 1=Tuesday, etc.
+	ByDay          []NDay         `json:"byDay,omitempty"`
+	ByMonthDay     []int          `json:"byMonthDay,omitempty"`
+	ByMonth        []string       `json:"byMonth,omitempty"`
+	ByYearDay      []int          `json:"byYearDay,omitempty"`
+	ByWeekNo       []int          `json:"byWeekNo,omitempty"`
+	ByHour         []int          `json:"byHour,omitempty"`
+	ByMinute       []int          `json:"byMinute,omitempty"`
+	BySecond       []int          `json:"bySecond,omitempty"`
+	BySetPos       []int          `json:"bySetPos,omitempty"`
+	Count          *int           `json:"count,omitempty"`
+	Until          *LocalDateTime `json:"until,omitempty"`
 }
 
 // NDay represents a day of the week with optional nth occurrence

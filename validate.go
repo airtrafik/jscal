@@ -36,7 +36,7 @@ type ValidationError struct {
 func (e ValidationError) Error() string {
 	// Format error messages in natural language
 	// Field names should be integrated into the message for readability
-	
+
 	// Handle special cases where field name should be uppercased or formatted differently
 	fieldName := e.Field
 	switch e.Field {
@@ -46,24 +46,24 @@ func (e ValidationError) Error() string {
 		// For @type, include the field in technical format
 		return fmt.Sprintf("%s: %s", e.Field, e.Message)
 	}
-	
+
 	// If message already contains "is required", format it specially
 	if e.Message == "is required" {
 		return fmt.Sprintf("%s %s", fieldName, e.Message)
 	}
-	
+
 	// If message starts with "must be", "cannot be", "should be", etc., include field name
-	if strings.HasPrefix(e.Message, "must be") || 
-	   strings.HasPrefix(e.Message, "cannot be") || 
-	   strings.HasPrefix(e.Message, "should be") ||
-	   strings.HasPrefix(e.Message, "invalid") {
+	if strings.HasPrefix(e.Message, "must be") ||
+		strings.HasPrefix(e.Message, "cannot be") ||
+		strings.HasPrefix(e.Message, "should be") ||
+		strings.HasPrefix(e.Message, "invalid") {
 		// For "invalid X", just use the message as-is since it likely already includes context
 		if strings.HasPrefix(e.Message, "invalid") {
 			return e.Message
 		}
 		return fmt.Sprintf("%s %s", fieldName, e.Message)
 	}
-	
+
 	// Default format for other cases
 	return e.Message
 }
@@ -94,7 +94,7 @@ func (e *Event) Validate() error {
 			Message: "event is nil",
 		}
 	}
-	
+
 	var errors ValidationErrors
 
 	// Required fields
@@ -571,9 +571,9 @@ func validateAlert(id string, a *Alert) ValidationErrors {
 				Message: "must be 'OffsetTrigger'",
 			})
 		}
-		
+
 		// Trigger must have either offset or when
-		// Note: 'when' field is not in our current OffsetTrigger struct, 
+		// Note: 'when' field is not in our current OffsetTrigger struct,
 		// but offset is required for OffsetTrigger
 		if a.Trigger.Offset == "" {
 			errors = append(errors, ValidationError{
@@ -714,7 +714,7 @@ func validateRecurrenceRule(fieldPrefix string, rr *RecurrenceRule) ValidationEr
 			Message: "must be positive",
 		})
 	}
-	
+
 	// Validate count and until are mutually exclusive
 	if rr.Count != nil && rr.Until != nil {
 		errors = append(errors, ValidationError{
@@ -723,22 +723,22 @@ func validateRecurrenceRule(fieldPrefix string, rr *RecurrenceRule) ValidationEr
 			Message: "cannot have both count and until",
 		})
 	}
-	
+
 	// Validate rscale (calendar system)
 	if rr.RScale != nil && *rr.RScale != "" {
 		validRScales := map[string]bool{
-			"gregorian": true,
-			"chinese":   true,
-			"hebrew":    true,
-			"islamic":   true,
+			"gregorian":     true,
+			"chinese":       true,
+			"hebrew":        true,
+			"islamic":       true,
 			"islamic-civil": true,
-			"islamic-tbla": true,
-			"persian": true,
-			"ethiopic": true,
-			"coptic": true,
-			"japanese": true,
-			"buddhist": true,
-			"indian": true,
+			"islamic-tbla":  true,
+			"persian":       true,
+			"ethiopic":      true,
+			"coptic":        true,
+			"japanese":      true,
+			"buddhist":      true,
+			"indian":        true,
 		}
 		if !validRScales[*rr.RScale] {
 			errors = append(errors, ValidationError{
@@ -748,7 +748,7 @@ func validateRecurrenceRule(fieldPrefix string, rr *RecurrenceRule) ValidationEr
 			})
 		}
 	}
-	
+
 	// Validate skip
 	if rr.Skip != nil && *rr.Skip != "" {
 		validSkips := map[string]bool{

@@ -20,13 +20,13 @@ type Group struct {
 	ProdId   *string    `json:"prodId,omitempty"`   // Product identifier that created this
 
 	// Group properties
-	Title       *string                 `json:"title,omitempty"`       // Group title
-	Description *string                 `json:"description,omitempty"` // Group description
-	Locale      *string                 `json:"locale,omitempty"`      // Language tag (RFC 5646)
-	Keywords    map[string]bool         `json:"keywords,omitempty"`    // Keywords/tags
-	Categories  map[string]bool         `json:"categories,omitempty"`  // Categories
-	Color       *string                 `json:"color,omitempty"`       // CSS color value
-	Links       map[string]*Link        `json:"links,omitempty"`       // External links
+	Title       *string          `json:"title,omitempty"`       // Group title
+	Description *string          `json:"description,omitempty"` // Group description
+	Locale      *string          `json:"locale,omitempty"`      // Language tag (RFC 5646)
+	Keywords    map[string]bool  `json:"keywords,omitempty"`    // Keywords/tags
+	Categories  map[string]bool  `json:"categories,omitempty"`  // Categories
+	Color       *string          `json:"color,omitempty"`       // CSS color value
+	Links       map[string]*Link `json:"links,omitempty"`       // External links
 
 	// Group-specific (Section 5.3)
 	Entries []CalendarObject `json:"entries"`          // Array of Event/Task objects
@@ -80,13 +80,13 @@ func (g *Group) AddEntry(entry CalendarObject) error {
 	if entry == nil {
 		return fmt.Errorf("cannot add nil entry to group")
 	}
-	
+
 	// Validate the entry type
 	entryType := entry.GetType()
 	if entryType != "Event" && entryType != "Task" {
 		return fmt.Errorf("invalid entry type '%s': must be Event or Task", entryType)
 	}
-	
+
 	// Check for duplicate UIDs
 	uid := entry.GetUID()
 	for _, existing := range g.Entries {
@@ -94,7 +94,7 @@ func (g *Group) AddEntry(entry CalendarObject) error {
 			return fmt.Errorf("entry with UID '%s' already exists in group", uid)
 		}
 	}
-	
+
 	g.Entries = append(g.Entries, entry)
 	g.Touch()
 	return nil
@@ -221,7 +221,7 @@ func (g *Group) GetType() string {
 func (g *Group) UnmarshalJSON(data []byte) error {
 	// Create an alias to avoid infinite recursion
 	type Alias Group
-	
+
 	// Create auxiliary struct with json.RawMessage for entries
 	aux := &struct {
 		Entries []json.RawMessage `json:"entries,omitempty"`
@@ -229,18 +229,18 @@ func (g *Group) UnmarshalJSON(data []byte) error {
 	}{
 		Alias: (*Alias)(g),
 	}
-	
+
 	// First unmarshal everything except entries
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
 	}
-	
+
 	// If no entries, we're done
 	if len(aux.Entries) == 0 {
 		g.Entries = []CalendarObject{}
 		return nil
 	}
-	
+
 	// Process each entry based on its @type
 	g.Entries = make([]CalendarObject, 0, len(aux.Entries))
 	for i, rawEntry := range aux.Entries {
@@ -251,7 +251,7 @@ func (g *Group) UnmarshalJSON(data []byte) error {
 		if err := json.Unmarshal(rawEntry, &typeCheck); err != nil {
 			return fmt.Errorf("failed to determine type of entry %d: %w", i, err)
 		}
-		
+
 		// Unmarshal into the appropriate type
 		var entry CalendarObject
 		switch typeCheck.Type {
@@ -276,10 +276,10 @@ func (g *Group) UnmarshalJSON(data []byte) error {
 		default:
 			return fmt.Errorf("unknown entry type at index %d: %s", i, typeCheck.Type)
 		}
-		
+
 		g.Entries = append(g.Entries, entry)
 	}
-	
+
 	return nil
 }
 
